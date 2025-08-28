@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PepperOrSMTH.org</title>
+
+  <style>
+    :root {
+      --rect1-color: #d83a3a;
+      --rect2-color: #ff7272;
+      --rect3-color: #ffa3a3;
+
+      --rect-width: 300px;
+      --rect-height: 96px;
+      --rect-gap: 12px;
+    }
+
+    html, body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      min-height: 200vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 16px 16px;
+    }
+
+    .site-logo {
+      display: block;
+      margin: 0 auto;
+      max-width: 600px;
+      width: 80%;
+      height: auto;
+    }
+
+    main {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 60vh;
+      padding: 2rem;
+    }
+
+    img.hampter-animated {
+      display: block;
+      margin: 0 auto;
+      transition: transform .4s ease, opacity .4s ease;
+      width: clamp(420px, 70vw, 1200px);
+      height: auto;
+      max-width: 100%;
+      filter: drop-shadow(6px 6px 10px rgba(0,0,0,0.5));
+      border-radius: 16px;
+    }
+
+    .right-rectangles {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: var(--rect-gap);
+      align-items: center;
+      z-index: 9998;
+    }
+
+    .rect {
+      width: var(--rect-width);
+      height: var(--rect-height);
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform .12s ease, max-height .3s ease, opacity .3s ease;
+    }
+
+    .rect:active { transform: scale(.98); }
+    .rect:focus { outline: 2px solid rgba(0,0,0,0.12); }
+
+    .rect::before {
+      content: var(--rect-label, "");
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 18px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+      pointer-events: none;
+    }
+
+    .rect--one { background: var(--rect1-color); --rect-label: "Devlog Revamp update"; }
+    .rect--two { background: var(--rect2-color); --rect-label: "SELF DISTRUCT PAGE!💥"; }
+    .rect--three { background: var(--rect3-color); --rect-label: "Lange ei fan club page"; }
+
+    .toggle-btn {
+      width: 48px;
+      height: 48px;
+      background: url("arrow.png") center/contain no-repeat;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      margin-bottom: 12px;
+      transition: transform .3s ease;
+      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .collapsed .rect {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(2px, 2px) rotate(0deg); }
+      20% { transform: translate(-2px, -4px) rotate(-1deg); }
+      40% { transform: translate(-6px, 0px) rotate(1deg); }
+      60% { transform: translate(6px, 4px) rotate(0deg); }
+      80% { transform: translate(-2px, -2px) rotate(1deg); }
+      100% { transform: translate(2px, 2px) rotate(-1deg); }
+    }
+
+    .shaking {
+      animation: shake 0.1s infinite;
+    }
+
+    #boom-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 20000;
+      display: none;
+    }
+
+    /* larger mini explosions */
+    .mini-boom {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      z-index: 20001;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="PepperOrSMTH.png" alt="PepperOrSMTH logo" class="site-logo" />
+  </header>
+
+  <main>
+    <img src="Hampter.png" alt="Hampter" />
+  </main>
+
+  <div class="right-rectangles collapsed" aria-hidden="true">
+    <button class="toggle-btn" aria-label="Toggle menu"></button>
+    <div class="rect rect--one"></div>
+    <div class="rect rect--two"></div>
+    <div class="rect rect--three"></div>
+  </div>
+
+  <img id="boom-image" src="boom.gif" alt="Boom">
+
+  <script>
+    const CAPTCHA_POSITION = "center";
+
+    (function() {
+      const defaultBg = '#ffffff';
+      const defaultFg = '#000000';
+      function applyBackground() {
+        const params = new URLSearchParams(location.search);
+        const bg = params.get('bg') || localStorage.getItem('pageBg') || defaultBg;
+        const fg = params.get('fg') || localStorage.getItem('pageFg') || defaultFg;
+        document.documentElement.style.setProperty('--page-bg', bg);
+        document.documentElement.style.setProperty('--page-fg', fg);
+        const style = document.createElement('style');
+        style.textContent = `html, body { background: var(--page-bg, ${defaultBg}) !important; color: var(--page-fg, ${defaultFg}); }`;
+        document.head.appendChild(style);
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyBackground);
+      } else {
+        applyBackground();
+      }
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      function makeRectLink(selector, url, target = '_self') {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        el.setAttribute('tabindex','0');
+        el.setAttribute('role','link');
+        el.addEventListener('click', () => {
+          target === '_blank' ? window.open(url,'_blank','noopener') : window.location.href = url;
+        });
+        el.addEventListener('keydown', e => {
+          if (['Enter',' '].includes(e.key)) { e.preventDefault(); el.click(); }
+        });
+      }
+
+      makeRectLink('.rect--one','https://pepperorsmth.github.io/silly-hampter-site-extra/','_blank');
+      makeRectLink('.rect--three','https://pepperorsmth.github.io/Lange-ei-POM.org/','_blank');
+
+      const rectTwo = document.querySelector('.rect--two');
+      if (rectTwo) {
+        rectTwo.setAttribute('tabindex','0');
+        rectTwo.setAttribute('role','button');
+
+        rectTwo.addEventListener('click', () => {
+          let container = document.getElementById('form-container');
+          if (!container) {
+            container = document.createElement('div');
+            container.id = 'form-container';
+            container.style.maxWidth = "400px";
+
+            if (CAPTCHA_POSITION === "center") {
+              Object.assign(container.style, {
+                position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)",
+                zIndex:"10000", background:"#fff", boxShadow:"0 4px 12px rgba(0,0,0,0.3)",
+                padding:"1rem", borderRadius:"8px"
+              });
+              document.body.appendChild(container);
+            } else {
+              document.body.appendChild(container);
+            }
+          }
+
+          container.innerHTML = `
+            <div id="confirm-box">
+              <p>Are you sure?</p>
+              <button id="confirm-yes">Yes</button>
+              <button id="confirm-no">No</button>
+            </div>
+          `;
+
+          document.getElementById("confirm-yes").onclick = () => {
+            container.innerHTML = `
+              <form id="captcha-form">
+                <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                  <img src="captha.png" alt="CAPTCHA" style="width:32px; height:32px;">
+                  Are you a robot?
+                </label>
+                <label><input type="radio" name="captcha" id="captcha-yes" value="yes" required> Yes</label><br>
+                <label><input type="radio" name="captcha" id="captcha-no" value="no" required> No</label><br>
+                <input type="submit" value="Submit" style="margin-top:0.5rem;">
+              </form>
+            `;
+
+            document.getElementById("captcha-form").onsubmit = (e) => {
+              e.preventDefault();
+              if (document.getElementById("captcha-no").checked) {
+                container.innerHTML = `
+                  <div id="really-sure">
+                    <p>Are you REALLY sure?</p>
+                    <button id="really-yes">Yes</button>
+                    <button id="really-no">No</button>
+                  </div>
+                `;
+                document.getElementById("really-yes").onclick = () => {
+                  document.body.classList.add("shaking");
+                  setTimeout(() => {
+                    document.body.classList.remove("shaking");
+                    document.getElementById("boom-image").style.display = "block";
+
+                    // After 2s spawn 10 larger mini explosions
+                    setTimeout(() => {
+                      for (let i=0; i<10; i++) {
+                        const mini = document.createElement("img");
+                        mini.src = "boom.gif";
+                        mini.className = "mini-boom";
+                        mini.style.top = Math.random()*80 + "vh";
+                        mini.style.left = Math.random()*80 + "vw";
+                        document.body.appendChild(mini);
+                      }
+                    },1000);
+
+                    setTimeout(() => {
+                      window.close();
+                    }, 5000);
+                  }, 5000);
+                };
+                document.getElementById("really-no").onclick = () => { container.remove(); };
+              } else {
+                alert("GO AWAY YOU DIRTY CLANKER!");
+              }
+            };
+          };
+
+          document.getElementById("confirm-no").onclick = () => { container.remove(); };
+        });
+      }
+
+      // hampter animation
+      const img = document.querySelector('main img[alt="Hampter"]');
+      if (img) {
+        img.classList.add('hampter-animated');
+        const images = ['Hamptaah.png','Lange ei.png'];
+        let index = images.indexOf(img.src.split('/').pop());
+        if (index === -1) index = 0;
+        img.src = images[index];
+        let direction = 1;
+        function swapImage() {
+          img.style.transform = `translateX(${24*direction}px)`;
+          img.style.opacity = '0';
+          setTimeout(() => {
+            index = 1-index;
+            img.src = images[index];
+            direction = -direction;
+            img.style.transform = 'translateX(0)';
+            img.style.opacity = '1';
+          },420);
+        }
+        let interval = setInterval(swapImage,6000);
+        img.addEventListener('mouseenter',()=>clearInterval(interval));
+        img.addEventListener('mouseleave',()=>interval=setInterval(swapImage,6000));
+        img.setAttribute('tabindex','0');
+        img.addEventListener('keydown',e=>{
+          if(['Enter',' '].includes(e.key)){e.preventDefault();swapImage();}
+        });
+      }
+
+      const container = document.querySelector('.right-rectangles');
+      const toggleBtn = document.querySelector('.toggle-btn');
+      toggleBtn.addEventListener('click', () => {
+        container.classList.toggle('collapsed');
+        toggleBtn.style.transform = container.classList.contains('collapsed')
+          ? "rotate(0deg)" : "rotate(220deg)";
+      });
+
+      const footer = document.createElement('footer');
+      const emailLink = document.createElement('a');
+      emailLink.href = "mailto:help.pepperorsmth@gmail.com";
+      emailLink.textContent = "help.pepperorsmth@gmail.com";
+      emailLink.style.color = "blue";
+      emailLink.style.textDecoration = "underline";
+      footer.append("Mail us at ", emailLink, " for any help/suggestions");
+      Object.assign(footer.style, {
+        position: 'fixed', left:'0', right:'10', bottom:'0', padding:'0.75rem',
+        textAlign:'center', background:'#ffffff', color:'#000', zIndex:'9999'
+      });
+      document.body.appendChild(footer);
+    });
+  </script>
+</body>
+</html>
